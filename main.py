@@ -4,11 +4,13 @@ from dotenv import load_dotenv
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.llms import OpenAI
 
-from langchain import OpenAI
 from langchain.chains import (
     LLMChain, 
     ConversationChain
 )
+
+from langchain.memory import ConversationSummaryMemory, ChatMessageHistory
+
 from langchain.chains.conversation.memory import (
     ConversationBufferMemory,
     ConversationSummaryMemory,
@@ -106,6 +108,51 @@ def summary_conversation():
 
     #print(conversation_sum.memory.buffer)
 
+def summary_conversation_given_history():
+
+    llm=OpenAI(temperature=0.0)
+
+    history = ChatMessageHistory()
+    history.add_user_message("hi")
+    history.add_ai_message("hi there!")
+    history.add_user_message("my name is stefano and the weather is good")
+    history.add_user_message("nice to meet you stefano")
+    
+    memory = ConversationSummaryMemory.from_messages(
+        llm=llm, 
+        chat_memory=history
+    )
+    print(memory.buffer)
+    #The human greets the AI, to which the AI responds with a friendly greeting. The human introduces himself as Stefano and the AI responds with a friendly greeting.
+
+    # memory = ConversationSummaryMemory.from_messages(
+    #     llm=llm, 
+    #     buffer="the user and AI greets each other and the user name is stefano. the weather is good"
+    # )
+
+    conversation_with_summary = ConversationChain(
+        llm=llm,
+        #memory=ConversationSummaryMemory(llm=OpenAI()),
+        memory=memory,
+        #verbose=True
+    )
+
+    query="what's my name?"
+    response=conversation_with_summary.predict(input=query)
+    print(response)
+    #You told me your name is Stefano. Is there anything else I can help you with?
+    
+    print(conversation_with_summary.memory.buffer)
+    #The human greets the AI, to which the AI responds with a friendly greeting. The human introduces himself as Stefano and the AI responds with a friendly greeting. The human then asks what his name is, to which the AI responds that it is Stefano. The AI then asks if there is anything else it can help with.
+
+    query="what's the weather like?"
+    response=conversation_with_summary.predict(input=query)
+    print(response)
+    #The current weather in your area is sunny with a temperature of 72 degrees Fahrenheit. The forecast for the rest of the day is mostly sunny with a high of 78 degrees Fahrenheit.
+    
+    print(conversation_with_summary.memory.buffer)
+    #The human greets the AI, to which the AI responds with a friendly greeting. The human introduces himself as Stefano and the AI responds with a friendly greeting. The human then asks what his name is, to which the AI responds that it is Stefano. The AI then asks if there is anything else it can help with, to which the human asks what the weather is like. The AI responds that the current weather is sunny with a temperature of 72 degrees Fahrenheit and the forecast for the rest of the day is mostly sunny with a high of 78 degrees Fahrenheit.
+
 def windowed_conversation():
 
     llm=OpenAI(temperature=0.0)
@@ -164,4 +211,5 @@ load_dotenv()
 
 # conversation()
 # summary_conversation()
-windowed_summary_conversation()
+#windowed_summary_conversation()
+summary_conversation_given_history()
